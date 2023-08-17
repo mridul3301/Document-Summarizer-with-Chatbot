@@ -1,8 +1,15 @@
 import streamlit as st
 from PyPDF2 import PdfReader
 from langchain.text_splitter import CharacterTextSplitter
-from summarize import summarizer
+from summarize import summarizer, abstractive_sum
+from chat import chat_module, split_text
+import torch
+import os
+from dotenv import load_dotenv
+load_dotenv()
+device = "cuda" if torch.cuda.is_available() else "cpu"
 
+pytorch_cuda_alloc_conf = os.getenv("PYTORCH_CUDA_ALLOC_CONF")
 
 def main():
     st.sidebar.title("Interact with Paper 📚")
@@ -24,22 +31,34 @@ def main():
             # Split into chunks
             text_splitter = CharacterTextSplitter(
                 separator="\n",
-                chunk_size = 1000,
-                chunk_overlap = 200,
+                chunk_size = 2500,
+                chunk_overlap = 250,
                 length_function = len
             )
 
+            torch.cuda.empty_cache()
+
             chunks = text_splitter.split_text(text)
             
-            intermediate_output, time_first = summarizer(chunks)
+            output, first_time = abstractive_sum(chunks)
 
-            new_chunks = text_splitter.split_text(intermediate_output)
+           # new_text_splitter = CharacterTextSplitter(
+           #    separator="\n",
+           #     chunk_size = 400,
+            #    chunk_overlap = 100,
+           #     length_function = len
+            #)
 
-            output, time_second = summarizer(new_chunks)
+            #chunks = new_text_splitter.split_text(first_output)
 
+            #torch.cuda.empty_cache()
+
+            #output, final_time = abstractive_sum(chunks)
+
+            time = first_time #+ final_time
 
             st.write(output)
-            st.write(f"Total time taken for summary generation is {time_first + time_second} seconds.")
+            st.write(f"Total time taken for summary generation is {time} seconds.")
     
     else:
         text_input = st.sidebar.text_input(
@@ -50,13 +69,14 @@ def main():
     
     text_input = st.text_input(
                 "Ask your paper here and hit enter 👇",
-                # label_visibility='visible',
-                placeholder='',
+                # label_visibility='visible',3
+                placeholder='Your Query',
                 )
     
     if text_input:
-        results = text_input
-        st.write(results)
+        chat_chunks = split_text(text)
+        op = chat_module(chat_chunks, text_input)
+        st.write(op)
         
     
 
