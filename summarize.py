@@ -29,9 +29,9 @@ def summarizer(chunks):
 
 
 def abstractive_sum(chunks):
-    checkpoint = "google/bigbird-pegasus-large-arxiv"
+    checkpoint = "google/pegasus-arxiv"
     tokenizer = AutoTokenizer.from_pretrained(checkpoint)
-    model = BigBirdPegasusForConditionalGeneration.from_pretrained(checkpoint, attention_type="original_full").to(device)
+    model = AutoModelForSeq2SeqLM.from_pretrained(checkpoint).to(device)
 
     inputs = [tokenizer(chunk, return_tensors="pt") for chunk in chunks]
 

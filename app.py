@@ -2,7 +2,7 @@ import streamlit as st
 from PyPDF2 import PdfReader
 from langchain.text_splitter import CharacterTextSplitter
 from summarize import summarizer, abstractive_sum
-from chat import chat_module, split_text
+from chat import chat_module, split_text, all_emb
 import torch
 import os
 from dotenv import load_dotenv
@@ -31,8 +31,8 @@ def main():
             # Split into chunks
             text_splitter = CharacterTextSplitter(
                 separator="\n",
-                chunk_size = 2500,
-                chunk_overlap = 250,
+                chunk_size = 3000,
+                chunk_overlap = 300,
                 length_function = len
             )
 
@@ -40,22 +40,9 @@ def main():
 
             chunks = text_splitter.split_text(text)
             
-            output, first_time = abstractive_sum(chunks)
+            output, first_time = summarizer(chunks)
 
-           # new_text_splitter = CharacterTextSplitter(
-           #    separator="\n",
-           #     chunk_size = 400,
-            #    chunk_overlap = 100,
-           #     length_function = len
-            #)
-
-            #chunks = new_text_splitter.split_text(first_output)
-
-            #torch.cuda.empty_cache()
-
-            #output, final_time = abstractive_sum(chunks)
-
-            time = first_time #+ final_time
+            time = first_time 
 
             st.write(output)
             st.write(f"Total time taken for summary generation is {time} seconds.")
@@ -75,7 +62,8 @@ def main():
     
     if text_input:
         chat_chunks = split_text(text)
-        op = chat_module(chat_chunks, text_input)
+        ask = all_emb(chat_chunks)
+        op = chat_module(ask, text_input)
         st.write(op)
         
     
